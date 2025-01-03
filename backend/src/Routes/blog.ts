@@ -14,11 +14,45 @@ export const blogRoute = new Hono<{
     }
 }>();
 
-blogRoute.use('/*', async (c, next) => {
-    const authHeader = c.req.header("authorization") || "";
-    
+blogRoute.get('/bulk', async (c) => {
+    const page = Number(c.req.query('page')) || 1;
+    const limit = Number(c.req.query('limit')) || 10;
+    const prisma = new PrismaClient({
+        datasourceUrl: c.env.DATABASE_URL,
+    }).$extends(withAccelerate())
+
     try {
-        const token = authHeader.split(" ")[1];
+        const blogs = await prisma.blog.findMany({
+            skip: (page - 1) * limit,
+            take: limit,
+            select: {
+                title: true,
+                content: true,
+                id: true,
+                author: {
+                    select: {
+                        name: true
+                    }
+                }
+            }
+        });
+
+        return c.json({
+            blogs,
+            success: true
+        }, 200)
+    } catch (error) {
+        return c.json({
+            message: "Error while getting all Blogs.",
+            success: false
+        }, 400)
+    }
+})
+
+blogRoute.use('/*', async (c, next) => {
+    const token = c.req.header("authorization") || "";
+
+    try {
         if (!token) {
             return c.json({ message: "Authorization token is missing." }, 403);
         }
@@ -33,7 +67,7 @@ blogRoute.use('/*', async (c, next) => {
             return c.json({ message: "Invalid or expired token." }, 403);
         }
     } catch (error) {
-        return c.json({ message: "Authentication failed." }, 403);
+        return c.json({ message: "Authentication failed.", Error: error, Token: token }, 403);
     }
 });
 
@@ -46,16 +80,18 @@ blogRoute.post('/', async (c) => {
             }, 411)
         }
 
+    const authorId = c.get("userId");
     const prisma = new PrismaClient({
         datasourceUrl: c.env.DATABASE_URL,
     }).$extends(withAccelerate())
+    
 
     try {
         const blog = await prisma.blog.create({
             data: {
                 title: body.title,
                 content: body.content,
-                authorId: c.get("userId")
+                authorId: Number(authorId)
             }
         })
 
@@ -64,9 +100,11 @@ blogRoute.post('/', async (c) => {
             BlogId: blog.id,
             success: true
         }, 200)
+        
     } catch (error) {
         return c.json({
             message: "Error while Creating Blog.",
+            Error: error,
             success: false
         }, 400)
     }
@@ -109,33 +147,6 @@ blogRoute.put('/', async (c) => {
     }
 })
 
-
-
-blogRoute.get('/bulk', async (c) => {
-    const page = Number(c.req.query('page')) || 1;
-    const limit = Number(c.req.query('limit')) || 10;
-    const prisma = new PrismaClient({
-        datasourceUrl: c.env.DATABASE_URL,
-    }).$extends(withAccelerate())
-
-    try {
-        const blogs = await prisma.blog.findMany({
-            skip: (page - 1) * limit,
-            take: limit,
-        });
-
-        return c.json({
-            blogs,
-            success: true
-        }, 200)
-    } catch (error) {
-        return c.json({
-            message: "Error while getting all Blogs.",
-            success: false
-        }, 400)
-    }
-})
-
 blogRoute.get('/:id', async (c) => {
     const id = c.req.param('id');
     const prisma = new PrismaClient({
@@ -146,6 +157,16 @@ blogRoute.get('/:id', async (c) => {
         const blog = await prisma.blog.findFirst({
             where: {
                 id: Number(id)
+            },
+            select: {
+                id: true,
+                title: true,
+                content: true,
+                author: {
+                    select: {
+                        name: true
+                    }
+                }
             }
         })
 
