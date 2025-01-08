@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Appbar from "../Components/Appbar"
 import BlogCard from "../Components/BlogCard"
 import Loading from "../Components/Loading";
@@ -5,7 +6,6 @@ import { useBlogs } from "../hooks"
 
 const Blogs = () => {
   const {loading, blogs} = useBlogs();
-
 
   if (loading) {
     return <div>

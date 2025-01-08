@@ -18,7 +18,7 @@ userRoute.post('/signup', async (c) => {
     const { success } = signUpInput.safeParse(body);
     if (!success) {
         return c.json({
-            message: "Inputs are not correct. "
+            message: "Inputs are not correct. ", success: false
         }, 411)
     }
 
@@ -35,7 +35,7 @@ userRoute.post('/signup', async (c) => {
 
         if (existingUser) {
             c.status(409)
-            return c.text(`${body.username} already exists.`);
+            return c.json({error: `${body.username} already exists.`, success: false})
         }
 
         const user = await prisma.user.create({
@@ -47,8 +47,7 @@ userRoute.post('/signup', async (c) => {
         })
 
         const jwt_Token = await sign({
-            id: user.id,
-            username: user.username
+            id: user.id
         }, c.env.JWT_SECRET)
 
         return c.json({
@@ -59,7 +58,7 @@ userRoute.post('/signup', async (c) => {
 
     } catch (error) {
         c.status(411);
-        return c.text(`Invalid Credentials. Error: ${error}`);
+        return c.json({error: `Invalid Credentials. Error: ${error}`, success: false});
     }
 })
 
@@ -69,7 +68,7 @@ userRoute.post('/signin', async (c) => {
     const { success } = signInInput.safeParse(body);
     if (!success) {
         return c.json({
-            message: "Inputs are not correct. "
+            message: "Inputs are not correct. ", success: false
         }, 411)
     }
     
@@ -84,6 +83,7 @@ userRoute.post('/signin', async (c) => {
                 password: body.password
             }
         })
+        
 
         if (!user) {
             c.status(403);
@@ -94,8 +94,7 @@ userRoute.post('/signin', async (c) => {
         }
 
         const jwt_token = await sign({
-            id: body.id,
-            username: body.username
+            id: user.id
         }, c.env.JWT_SECRET)
 
         return c.json({

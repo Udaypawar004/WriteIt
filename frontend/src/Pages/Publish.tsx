@@ -16,14 +16,14 @@ export const Publish = () => {
             <div className="max-w-screen-lg w-full">
                 <input onChange={(e) => {
                     setTitle(e.target.value)
-                }} type="text" className="w-full bg-black focus:outline-none text-5xl active:border-gray-500 text-gray-300 text-sm rounded-lg block w-full p-2.5" placeholder="Title" />
+                }} type="text" className="w-full font-semibold bg-black focus:outline-none text-[56px] active:border-gray-500 text-gray-300 text-sm rounded-lg block w-full p-2.5" placeholder="Title" />
 
                 <TextEditor onChange={(e) => {
                     setDescription(e.target.value)
                 }} />
 
                 <button onClick={async () => {
-                    const response = await axios.post(`${BACKEND_URL}/api/v1/blog`, {
+                    const response = await axios.post(`${BACKEND_URL}/api/v1/blog/create-blog`, {
                         title,
                         content: description
                     }, {
@@ -31,7 +31,8 @@ export const Publish = () => {
                             Authorization: localStorage.getItem("token")
                         }
                     });
-                    navigate(`/blog/${response.data.id}`)
+
+                    navigate(`/blog/${response.data.BlogId}`)
                 }} type="submit" className="mt-4 inline-flex items-center px-5 py-2.5 text-sm font-medium text-center bg-gray-900 bg-blue-700 rounded-lg focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-900 hover:bg-blue-800">
                     Publish post
                 </button>

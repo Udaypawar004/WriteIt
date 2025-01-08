@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { BACKEND_URL } from "../config";
+import { useNavigate } from "react-router-dom";
 
 export interface Blog {
     title : string;
@@ -38,18 +39,24 @@ export const useBlog = ({ id }: { id: string }) => {
 export const useBlogs = () => {
     const [blogs, setBlogs] = useState<Blog[]>([]);
     const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
     const token = localStorage.getItem('token');
 
     useEffect(()=>{
-        axios.get(`${BACKEND_URL}/api/v1/blog/bulk`, {
-            headers: {
-                Authorization: token
-            }
-        })
-            .then(response => {
-                setBlogs(response.data.blogs)
-                setLoading(false)
+        if (!token){
+            navigate("/signin")
+        }
+        else {
+            axios.get(`${BACKEND_URL}/api/v1/blog/bulk`, {
+                headers: {
+                    Authorization: token
+                }
             })
+                .then(response => {
+                    setBlogs(response.data.blogs)
+                    setLoading(false)
+                })
+        }
     }, [])
 
     return {
