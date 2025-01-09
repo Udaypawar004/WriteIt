@@ -2,7 +2,7 @@ import { Blog } from "../hooks"
 import Appbar from "./Appbar"
 import Avatar from "./Avatar";
 
-const FullBlog = ( { blog } : {blog: Blog}) => {
+const FullBlog = ( { blog } : {blog: Blog | undefined}) => {
   if (!blog) {
     return <div>Blog not found</div>;
   }
